@@ -2,6 +2,7 @@ module Twine
   class TwineDefinition
     attr_reader :key
     attr_accessor :comment
+    attr_accessor :ios_comment
     attr_accessor :tags
     attr_reader :translations
     attr_accessor :reference
@@ -10,6 +11,7 @@ module Twine
     def initialize(key)
       @key = key
       @comment = nil
+      @ios_comment = nil
       @tags = nil
       @translations = {}
     end
@@ -20,6 +22,15 @@ module Twine
 
     def raw_comment
       @comment
+    end
+
+
+    def ios_comment
+      raw_ios_comment || (reference.ios_comment if reference)
+    end
+
+    def raw_ios_comment
+      @ios_comment
     end
 
     # [['tag1', 'tag2'], ['~tag3']] == (tag1 OR tag2) AND (!tag3)
@@ -141,10 +152,11 @@ module Twine
             if match
               key = match[1].strip
               value = match[2].strip
-              
-              value = value[1..-2] if value[0] == '`' && value[-1] == '`'
 
+              value = value[1..-2] if value[0] == '`' && value[-1] == '`'
               case key
+              when 'ios'
+                current_definition.ios_comment = value
               when 'comment'
                 current_definition.comment = value
               when 'tags'
@@ -192,7 +204,7 @@ module Twine
             if !value && !definition.reference_key
               puts "Warning: #{definition.key} does not exist in developer language '#{dev_lang}'"
             end
-            
+
             if definition.reference_key
               f.puts "\t\tref = #{definition.reference_key}"
             end
@@ -202,6 +214,9 @@ module Twine
             end
             if definition.raw_comment and definition.raw_comment.length > 0
               f.puts "\t\tcomment = #{definition.raw_comment}"
+            end
+            if definition.raw_ios_comment and definition.raw_ios_comment.length > 0
+              f.puts "\t\tios = #{definition.raw_ios_comment}"
             end
             @language_codes[1..-1].each do |lang|
               write_value(definition, lang, f)

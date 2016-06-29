@@ -27,7 +27,7 @@ module Twine
         raise NotImplementedError.new("You must implement default_file_name in your formatter class.")
       end
 
-      def set_translation_for_key(key, lang, value)
+      def set_translation_for_key(current_section, key, lang, value)
         value = value.gsub("\n", "\\n")
 
         if @twine_file.definitions_by_key.include?(key)
@@ -39,18 +39,13 @@ module Twine
           end
         elsif @options[:consume_all]
           Twine::stderr.puts "Adding new definition '#{key}' to twine file."
-          current_section = @twine_file.sections.find { |s| s.name == 'Uncategorized' }
-          unless current_section
-            current_section = TwineSection.new('Uncategorized')
-            @twine_file.sections.insert(0, current_section)
-          end
           current_definition = TwineDefinition.new(key)
           current_section.definitions << current_definition
-          
+
           if @options[:tags] && @options[:tags].length > 0
-            current_definition.tags = @options[:tags]            
+            current_definition.tags = @options[:tags]
           end
-          
+
           @twine_file.definitions_by_key[key] = current_definition
           @twine_file.definitions_by_key[key].translations[lang] = value
         else
@@ -63,14 +58,26 @@ module Twine
 
       def set_comment_for_key(key, comment)
         return unless @options[:consume_comments]
-        
+
         if @twine_file.definitions_by_key.include?(key)
           definition = @twine_file.definitions_by_key[key]
-          
+
           reference = @twine_file.definitions_by_key[definition.reference_key] if definition.reference_key
 
           if !reference or comment != reference.raw_comment
             definition.comment = comment
+          end
+        end
+      end
+
+      def set_ios_comment_for_key(key, comment)
+        if @twine_file.definitions_by_key.include?(key)
+          definition = @twine_file.definitions_by_key[key]
+
+          reference = @twine_file.definitions_by_key[definition.reference_key] if definition.reference_key
+
+          if !reference or ios_comment != reference.raw_ios_comment
+            definition.ios_comment = comment
           end
         end
       end
@@ -157,6 +164,19 @@ module Twine
 
       def escape_quotes(text)
         text.gsub('"', '\\\\"')
+      end
+
+      def section_exists(section_name)
+        @twine_file.sections.find { |s| s.name == section_name }
+      end
+
+      def get_section(name)
+        @twine_file.sections.each do |s|
+          if s.name == name
+            return s
+          end
+        end
+        return nil
       end
     end
   end
