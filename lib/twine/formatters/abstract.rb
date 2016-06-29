@@ -23,6 +23,10 @@ module Twine
         raise NotImplementedError.new("You must implement can_handle_directory? in your formatter class.")
       end
 
+      def can_handle_file?(path)
+        raise NotImplementedError.new("You must implement can_handle_file? in your formatter class.")
+      end
+
       def default_file_name
         raise NotImplementedError.new("You must implement default_file_name in your formatter class.")
       end

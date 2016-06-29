@@ -15,8 +15,18 @@ module Twine
         Dir.entries(path).any? { |item| /^.+\.lproj$/.match(item) }
       end
 
+      def can_handle_file?(path)
+        path_arr = path.split(File::SEPARATOR)
+        file_name = path_arr[path_arr.length - 1]
+        return file_name == default_file_name || file_name == default_plural_file_name
+      end
+
       def default_file_name
         return 'Localizable.strings'
+      end
+
+      def default_plural_file_name
+        return 'Localizable.stringsdict'
       end
 
       def determine_language_given_path(path)
@@ -26,6 +36,8 @@ module Twine
           if match
             if match[1] != "Base"
               return match[1]
+            else
+              return 'en'
             end
           end
         end
@@ -34,7 +46,11 @@ module Twine
       end
 
       def output_path_for_language(lang)
-        "#{lang}.lproj"
+        if lang == 'en'
+          "Base.lproj"
+        else
+          "#{lang}.lproj"
+        end
       end
 
       def read(io, lang)
@@ -111,11 +127,11 @@ module Twine
       end
 
       def plural_input_file_for_lang(lang)
-        @options[:input_path] + output_path_for_language(lang) + "/Localizable.stringsdict"
+        @options[:input_path] + output_path_for_language(lang) + "/" + default_plural_file_name
       end
 
       def plural_output_file_for_lang(lang)
-        @options[:output_path] + output_path_for_language(lang) + "/Localizable.stringsdict"
+        @options[:output_path] + output_path_for_language(lang) + "/" + default_plural_file_name
       end
 
       def format_sections(twine_file, lang)

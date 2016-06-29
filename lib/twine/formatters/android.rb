@@ -28,6 +28,11 @@ module Twine
         Dir.entries(path).any? { |item| /^values.*$/.match(item) }
       end
 
+      def can_handle_file?(path)
+        path_arr = path.split(File::SEPARATOR)
+        return path_arr[path_arr.length - 1] == default_file_name
+      end
+
       def default_file_name
         return 'strings.xml'
       end
@@ -36,7 +41,7 @@ module Twine
         path_arr = path.split(File::SEPARATOR)
         path_arr.each do |segment|
           if segment == 'values'
-            return @twine_file.language_codes[0]
+            return 'en'
           else
             # The language is defined by a two-letter ISO 639-1 language code, optionally followed by a two letter ISO 3166-1-alpha-2 region code (preceded by lowercase "r").
             # see http://developer.android.com/guide/topics/resources/providing-resources.html#AlternativeResources
@@ -54,7 +59,11 @@ module Twine
       end
 
       def output_path_for_language(lang)
-        "values-" + (LANG_MAPPINGS.key(lang) || lang)
+        if lang == 'en'
+          "values"
+        else
+          "values-" + (LANG_MAPPINGS.key(lang) || lang)
+        end
       end
 
       def set_translation_for_key(section, key, lang, value)
