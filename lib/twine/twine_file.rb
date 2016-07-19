@@ -133,7 +133,8 @@ module Twine
 
     def read(path)
       if !File.file?(path)
-        raise Twine::Error.new("File does not exist: #{path}")
+        file = File.new(path, 'w:UTF-8')
+        file.close
       end
 
       File.open(path, 'r:UTF-8') do |f|
