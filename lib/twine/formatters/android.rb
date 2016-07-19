@@ -86,6 +86,11 @@ module Twine
             comment = content if content.length > 0 and not content.start_with?("SECTION:")
 
           elsif child.is_a? REXML::Element
+
+            if child.attributes['translatable']
+              next
+            end
+
             section = nil
             if child.name == 'plurals'
               key = child.attributes['name']
