@@ -24,7 +24,6 @@ module Twine
       @comment
     end
 
-
     def ios_comment
       raw_ios_comment || (reference.ios_comment if reference)
     end
@@ -61,6 +60,24 @@ module Twine
 
       return translation
     end
+
+    # Twine adds a copy of the dev language's translation if there is no definition provided for the language,
+    # which is useful in the main Localizable.strings file because iOS doesn't auto use the Base language's
+    # value, but we don't want that behaviour in our plurals
+    def translation_for_lang_or_nil(lang, dev_lang)
+      translation = [lang].flatten.map { |l| @translations[l] }.first
+
+      # translation never comes back as nil because Twine fills with the dev_lang string
+      if lang != dev_lang
+        [lang].flatten.map do |l|
+          if @translations[l] == @translations[dev_lang]
+            return nil
+          end
+        end
+      end
+
+      return translation
+    end
   end
 
   class TwineSection
@@ -70,6 +87,10 @@ module Twine
     def initialize(name)
       @name = name
       @definitions = []
+    end
+
+    def is_uncategorized
+      return @name == 'Uncategorized'
     end
   end
 

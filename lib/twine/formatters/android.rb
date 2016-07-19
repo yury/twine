@@ -146,7 +146,7 @@ module Twine
           result += "\n#{section_header}" if section_header
 
           # DEAL WITH PLURALS HERE
-          if section.name == 'Uncategorized'
+          if section.is_uncategorized
             definitions.map! { |definition| format_definition(definition, lang) }
             definitions.compact! # remove nil definitions
             definitions.map! { |definition| "\n#{definition}" }  # prepend newline
