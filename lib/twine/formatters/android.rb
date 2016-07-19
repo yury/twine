@@ -209,7 +209,7 @@ module Twine
         resource_identifier_regex = /@(?!([a-z\.]+:)?[a-z+]+\/[a-zA-Z_]+)/   # @[<package_name>:]<resource_type>/<resource_name>
         value.gsub(resource_identifier_regex, '\@')
 
-        value.gsub("%\\\\@", '%s')
+        value.gsub('strong>', 'b>')
       end
 
       # see http://developer.android.com/guide/topics/resources/string-resource.html#FormattingAndStyling
@@ -239,6 +239,7 @@ module Twine
 
         # replace beginning and end spaces with \u0020. Otherwise Android strips them.
         value.gsub(/\A *| *\z/) { |spaces| '\u0020' * spaces.length }
+        value.gsub('%#s', '%#@')
       end
 
     end

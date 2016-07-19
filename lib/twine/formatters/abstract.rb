@@ -167,7 +167,7 @@ module Twine
       end
 
       def escape_quotes(text)
-        text.gsub('"', '\\\\"')
+        text.gsub('"', "\\\"")
       end
 
       def section_exists(section_name)
