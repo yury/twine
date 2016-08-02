@@ -2,6 +2,7 @@ module Twine
   class TwineDefinition
     attr_reader :key
     attr_accessor :comment
+    attr_accessor :ios_comment
     attr_accessor :tags
     attr_reader :translations
     attr_accessor :reference
@@ -10,6 +11,7 @@ module Twine
     def initialize(key)
       @key = key
       @comment = nil
+      @ios_comment = nil
       @tags = nil
       @translations = {}
     end
@@ -20,6 +22,14 @@ module Twine
 
     def raw_comment
       @comment
+    end
+
+    def ios_comment
+      raw_ios_comment || (reference.ios_comment if reference)
+    end
+
+    def raw_ios_comment
+      @ios_comment
     end
 
     # [['tag1', 'tag2'], ['~tag3']] == (tag1 OR tag2) AND (!tag3)
@@ -50,6 +60,24 @@ module Twine
 
       return translation
     end
+
+    # Twine adds a copy of the dev language's translation if there is no definition provided for the language,
+    # which is useful in the main Localizable.strings file because iOS doesn't auto use the Base language's
+    # value, but we don't want that behaviour in our plurals
+    def translation_for_lang_or_nil(lang, dev_lang)
+      translation = [lang].flatten.map { |l| @translations[l] }.first
+
+      # translation never comes back as nil because Twine fills with the dev_lang string
+      if lang != dev_lang
+        [lang].flatten.map do |l|
+          if @translations[l] == @translations[dev_lang]
+            return nil
+          end
+        end
+      end
+
+      return translation
+    end
   end
 
   class TwineSection
@@ -59,6 +87,10 @@ module Twine
     def initialize(name)
       @name = name
       @definitions = []
+    end
+
+    def is_uncategorized
+      return @name == 'Uncategorized'
     end
   end
 
@@ -101,7 +133,8 @@ module Twine
 
     def read(path)
       if !File.file?(path)
-        raise Twine::Error.new("File does not exist: #{path}")
+        file = File.new(path, 'w:UTF-8')
+        file.close
       end
 
       File.open(path, 'r:UTF-8') do |f|
@@ -141,10 +174,11 @@ module Twine
             if match
               key = match[1].strip
               value = match[2].strip
-              
-              value = value[1..-2] if value[0] == '`' && value[-1] == '`'
 
+              value = value[1..-2] if value[0] == '`' && value[-1] == '`'
               case key
+              when 'ios'
+                current_definition.ios_comment = value
               when 'comment'
                 current_definition.comment = value
               when 'tags'
@@ -192,7 +226,7 @@ module Twine
             if !value && !definition.reference_key
               puts "Warning: #{definition.key} does not exist in developer language '#{dev_lang}'"
             end
-            
+
             if definition.reference_key
               f.puts "\t\tref = #{definition.reference_key}"
             end
@@ -202,6 +236,9 @@ module Twine
             end
             if definition.raw_comment and definition.raw_comment.length > 0
               f.puts "\t\tcomment = #{definition.raw_comment}"
+            end
+            if definition.raw_ios_comment and definition.raw_ios_comment.length > 0
+              f.puts "\t\tios = #{definition.raw_ios_comment}"
             end
             @language_codes[1..-1].each do |lang|
               write_value(definition, lang, f)

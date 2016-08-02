@@ -7,7 +7,7 @@ module Twine
   class Runner
     def self.run(args)
       options = CLI.parse(args)
-      
+
       twine_file = TwineFile.new
       twine_file.read options[:twine_file]
       runner = new(options, twine_file)
@@ -69,7 +69,7 @@ module Twine
 
       formatter_for_directory = find_formatter { |f| f.can_handle_directory?(@options[:output_path]) }
       formatter = formatter_for_format(@options[:format]) || formatter_for_directory
-      
+
       unless formatter
         raise Twine::Error.new "Could not determine format given the contents of #{@options[:output_path]}"
       end
@@ -153,7 +153,7 @@ module Twine
 
     def generate_loc_drop
       validate_twine_file if @options[:validate]
-      
+
       require_rubyzip
 
       if File.file?(@options[:output_path])
@@ -176,7 +176,7 @@ module Twine
                 Twine::stderr.puts "Skipping file #{file_name} since it would not contain any translations."
                 next
               end
-              
+
               IO.write(temp_path, output, encoding: encoding)
               zipfile.add(zip_path, temp_path)
             end
@@ -307,18 +307,25 @@ module Twine
     def prepare_read_write(path, lang)
       formatter_for_path = find_formatter { |f| f.extension == File.extname(path) }
       formatter = formatter_for_format(@options[:format]) || formatter_for_path
-      
-      unless formatter
-        raise Twine::Error.new "Unable to determine format of #{path}"
-      end      
 
-      lang = lang || determine_language_given_path(path) || formatter.determine_language_given_path(path)
-      unless lang
-        raise Twine::Error.new "Unable to determine language for #{path}"
+      unless formatter
+        if !path.include?("Localizable.stringsdict")
+          raise Twine::Error.new "Unable to determine format of #{path}"
+        else
+          raise Twine::Error.new "Ignoring for now #{path}"
+        end
       end
 
-      @twine_file.language_codes << lang unless @twine_file.language_codes.include? lang
+      if formatter.can_handle_file?(path)
+        lang = lang || determine_language_given_path(path) || formatter.determine_language_given_path(path)
+        unless lang
+          raise Twine::Error.new "Unable to determine language for #{path}"
+        end
 
+        @twine_file.language_codes << lang unless @twine_file.language_codes.include? lang
+      else
+        raise Twine::Error.new "Ignoring #{path}"
+      end
       return formatter, lang
     end
   end
