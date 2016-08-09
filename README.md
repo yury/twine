@@ -8,14 +8,14 @@ Twine is a command line tool for managing your strings and their translations. T
 
 Twine is most easily installed as a Gem.
 
-	$ gem install twine
+	$ gem install yury-twine
 
 ### From Source
 
 You can also run Twine directly from source. However, it requires [rubyzip][rubyzip] in order to create and read standard zip files.
 
 	$ gem install rubyzip
-	$ git clone git://github.com/mobiata/twine.git
+	$ git clone git://github.com/yury/twine.git
 	$ cd twine
 	$ ./twine --help
 

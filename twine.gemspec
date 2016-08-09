@@ -2,7 +2,7 @@ $LOAD_PATH.unshift 'lib'
 require 'twine/version'
 
 Gem::Specification.new do |s|
-  s.name         = "twine"
+  s.name         = "yury-twine"
   s.version      = Twine::VERSION
   s.date         = Time.now.strftime('%Y-%m-%d')
   s.summary      = "Manage strings and their translations for your iOS, Android and other projects."
